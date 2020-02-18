@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 type Channel struct {
@@ -35,7 +36,7 @@ func parse_mp3(url string) string {
 	episode_number := re.FindStringSubmatch(url)[1]
 
 	type RadioTFile struct {
-		Number string `json:"number"`
+		Number int64  `json:"number"`
 		Url    string `json:"url"`
 	}
 
@@ -43,9 +44,14 @@ func parse_mp3(url string) string {
 		File RadioTFile `json:"file"`
 	}
 
+	num, e := strconv.ParseInt(episode_number, 10, 64)
+	if e != nil {
+		os.Exit(1)
+	}
+
 	episode := RadioTEpisode{
 		File: RadioTFile{
-			Number: episode_number,
+			Number: num,
 			Url:    url,
 		},
 	}
@@ -74,6 +80,8 @@ func main() {
 
 	rss_url := "https://radio-t.com/podcast.rss"
 
+	parse_mp3("http://cdn.radio-t.com/rt_podcast672.mp3")
+
 	resp, err := http.Get(rss_url)
 
 	if err != nil {
@@ -98,5 +106,4 @@ func main() {
 	for _, item := range channel.Items {
 		parse_mp3(item.Enclosure.Url)
 	}
-
 }
