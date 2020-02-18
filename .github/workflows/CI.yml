@@ -9,7 +9,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
     - uses: actions/checkout@master
+
+
+    - run: git checkout -b master
+    - run: git config --global user.email "robot+hal@bessarabov.ru"
+    - run: git config --global user.name "HAL 9000"
+    - run: git remote rm origin
+    - name: Setup git repo
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: git remote add origin https://bessarabov:$GITHUB_TOKEN@github.com/bessarabov/radio-t-data
+
 
     - name: Docker pull base image
       run: docker pull golang:1.13.8-alpine3.11
@@ -18,4 +30,9 @@ jobs:
       run: cd code; docker build . --tag code:${{ github.sha }}
 
     - name: Run code
-      run: docker run --rm code:${{ github.sha }}
+      run: docker run --rm --volume `pwd`/data/:/data/ code:${{ github.sha }}
+
+
+    - run: git add data
+    - run: git commit -m 'Commit'
+    - run: git push origin master

@@ -56,8 +56,6 @@ func save_file(url string, file_name string) int64 {
 
 func parse_mp3(url string) string {
 
-	fmt.Println(url)
-
 	re := regexp.MustCompile(`^.*?([0-9]+)\.mp3$`)
 
 	episode_number := re.FindStringSubmatch(url)[1]
@@ -68,47 +66,62 @@ func parse_mp3(url string) string {
 	}
 
 	tmp_file_name := "/tmp/" + episode_number + ".mp3"
+	json_file_name := "/data/episodes/" + episode_number + ".json"
 
-	size := save_file(url, tmp_file_name)
+	if _, err := os.Stat(json_file_name); err == nil {
+		// Json file already exists, doing nothign
+		fmt.Println("Skipping " + url)
+	} else if os.IsNotExist(err) {
+		// No json file, going to download mp3 file and parse it
 
-	type RadioTFile struct {
-		Size   int64  `json:"size_bytes"`
-		Length int64  `json:"length_seconds"`
-		Url    string `json:"url"`
-		Md5    string `json:"md5"`
-	}
+		fmt.Println(url)
 
-	type RadioTEpisode struct {
-		Number int64      `json:"number"`
-		File   RadioTFile `json:"file"`
-	}
+		size := save_file(url, tmp_file_name)
 
-	episode := RadioTEpisode{
-		Number: num,
-		File: RadioTFile{
-			Url:    url,
-			Md5:    get_md5_from_file(tmp_file_name),
-			Size:   size,
-			Length: get_sound_length_from_mp3_file(tmp_file_name),
-		},
-	}
+		type RadioTFile struct {
+			Size   int64  `json:"size_bytes"`
+			Length int64  `json:"length_seconds"`
+			Url    string `json:"url"`
+			Md5    string `json:"md5"`
+		}
 
-	var jsonData []byte
-	jsonData, err := json.MarshalIndent(episode, "", "    ")
-	if err != nil {
+		type RadioTEpisode struct {
+			Number int64      `json:"number"`
+			File   RadioTFile `json:"file"`
+		}
+
+		episode := RadioTEpisode{
+			Number: num,
+			File: RadioTFile{
+				Url:    url,
+				Md5:    get_md5_from_file(tmp_file_name),
+				Size:   size,
+				Length: get_sound_length_from_mp3_file(tmp_file_name),
+			},
+		}
+
+		var jsonData []byte
+		jsonData, err := json.MarshalIndent(episode, "", "    ")
+		if err != nil {
+			os.Exit(1)
+		}
+
+		f, err := os.Create(json_file_name)
+
+		if err != nil {
+			fmt.Printf("%s", err)
+			os.Exit(1)
+		}
+
+		f.WriteString(string(jsonData) + "\n")
+
+		f.Close()
+
+	} else {
+		// Somthing strange.
+		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	f, err := os.Create("/data/episodes/" + episode_number + ".json")
-
-	if err != nil {
-		fmt.Printf("%s", err)
-		os.Exit(1)
-	}
-
-	f.WriteString(string(jsonData) + "\n")
-
-	f.Close()
 
 	return "ok"
 }
@@ -157,9 +170,6 @@ func get_sound_length_from_mp3_file(file_name string) int64 {
 
 func main() {
 
-	// tmp
-	os.Exit(1)
-
 	rss_url := "https://radio-t.com/podcast.rss"
 
 	resp, err := http.Get(rss_url)
@@ -185,5 +195,8 @@ func main() {
 
 	for _, item := range channel.Items {
 		parse_mp3(item.Enclosure.Url)
+
+		// TMP
+		break
 	}
 }
