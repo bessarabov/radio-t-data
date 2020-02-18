@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 )
 
 type Channel struct {
@@ -22,6 +24,50 @@ type Item struct {
 	Enclosure   Enclosure `xml:"enclosure"`
 	Link        string    `xml:"link"`
 	Title       string    `xml:"title"`
+}
+
+func parse_mp3(url string) string {
+
+	fmt.Println(url)
+
+	re := regexp.MustCompile(`^.*?([0-9]+)\.mp3$`)
+
+	episode_number := re.FindStringSubmatch(url)[1]
+
+	type RadioTFile struct {
+		Number string `json:"number"`
+		Url    string `json:"url"`
+	}
+
+	type RadioTEpisode struct {
+		File RadioTFile `json:"file"`
+	}
+
+	episode := RadioTEpisode{
+		File: RadioTFile{
+			Number: episode_number,
+			Url:    url,
+		},
+	}
+
+	var jsonData []byte
+	jsonData, err := json.MarshalIndent(episode, "", "    ")
+	if err != nil {
+		os.Exit(1)
+	}
+
+	f, err := os.Create("/data/episodes/" + episode_number + ".json")
+
+	if err != nil {
+		fmt.Printf("%s", err)
+		os.Exit(1)
+	}
+
+	f.WriteString(string(jsonData) + "\n")
+
+	f.Close()
+
+	return "ok"
 }
 
 func main() {
@@ -49,8 +95,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	for i, item := range channel.Items {
-		fmt.Printf("%v. item title: %v\n", i, item.Enclosure.Url)
+	for _, item := range channel.Items {
+		parse_mp3(item.Enclosure.Url)
 	}
 
 }
