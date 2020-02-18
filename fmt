@@ -1,0 +1,6 @@
+docker run \
+    --rm \
+    -it \
+    --volume `pwd`/code/main.go:/go/src/main.go \
+    code \
+    go fmt src/main.go

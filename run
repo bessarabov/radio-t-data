@@ -1,0 +1,7 @@
+docker run \
+    --rm \
+    -it \
+    --volume `pwd`/code/main.go:/go/src/main.go \
+    --volume `pwd`/data/:/data/ \
+    code \
+    sh
