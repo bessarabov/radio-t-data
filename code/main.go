@@ -199,7 +199,7 @@ func main() {
 		parse_mp3(item.Enclosure.Url)
 
 		i++
-		if i > 10 {
+		if i > 30 {
 			break
 		}
 	}
