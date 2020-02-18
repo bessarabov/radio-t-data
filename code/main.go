@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 )
@@ -68,23 +69,27 @@ func parse_mp3(url string) string {
 
 	tmp_file_name := "/tmp/" + episode_number + ".mp3"
 
-	save_file(url, tmp_file_name)
+	size := save_file(url, tmp_file_name)
 
 	type RadioTFile struct {
-		Number int64  `json:"number"`
+		Size   int64  `json:"size_bytes"`
+		Length int64  `json:"length_seconds"`
 		Url    string `json:"url"`
 		Md5    string `json:"md5"`
 	}
 
 	type RadioTEpisode struct {
-		File RadioTFile `json:"file"`
+		Number int64      `json:"number"`
+		File   RadioTFile `json:"file"`
 	}
 
 	episode := RadioTEpisode{
+		Number: num,
 		File: RadioTFile{
-			Number: num,
 			Url:    url,
 			Md5:    get_md5_from_file(tmp_file_name),
+			Size:   size,
+			Length: get_sound_length_from_mp3_file(tmp_file_name),
 		},
 	}
 
@@ -123,6 +128,31 @@ func get_md5_from_file(file_name string) string {
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func get_sound_length_from_mp3_file(file_name string) int64 {
+
+	// Very ugly and dangerous. This code will fail if there is spaces
+	// (or some other chars) in file_name
+	cmd := exec.Command("sh", "-c", "sox "+file_name+" -n stat")
+
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// Just using the number of seconds. Throwing away part after the dot.
+	re := regexp.MustCompile(`Length \(seconds\):\s*([0-9]+)`)
+
+	seconds := re.FindStringSubmatch(string(stdoutStderr))[1]
+
+	num, e := strconv.ParseInt(seconds, 10, 64)
+	if e != nil {
+		os.Exit(1)
+	}
+
+	return num
 }
 
 func main() {
