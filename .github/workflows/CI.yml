@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Docker pull base image
+      run: docker pull golang:1.13.8-alpine3.11
+
+    - name: Build docker image
+      run: cd code; docker build . --tag code:${{ github.sha }}
+
+    - name: Run code
+      run: docker run --rm code:${{ github.sha }}
