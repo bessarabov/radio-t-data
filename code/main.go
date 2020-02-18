@@ -54,7 +54,9 @@ func save_file(url string, file_name string) int64 {
 	return n
 }
 
-func parse_mp3(url string) string {
+func parse_mp3(url string) bool {
+
+	was_parsing := false
 
 	re := regexp.MustCompile(`^.*?([0-9]+)\.mp3$`)
 
@@ -75,6 +77,8 @@ func parse_mp3(url string) string {
 		// No json file, going to download mp3 file and parse it
 
 		fmt.Println(url)
+
+		was_parsing = true
 
 		size := save_file(url, tmp_file_name)
 
@@ -123,7 +127,7 @@ func parse_mp3(url string) string {
 		os.Exit(1)
 	}
 
-	return "ok"
+	return was_parsing
 }
 
 func get_md5_from_file(file_name string) string {
@@ -196,10 +200,13 @@ func main() {
 	i := 1
 
 	for _, item := range channel.Items {
-		parse_mp3(item.Enclosure.Url)
+		was_parsing := parse_mp3(item.Enclosure.Url)
 
-		i++
-		if i > 30 {
+		if was_parsing {
+			i++
+		}
+
+		if i > 20 {
 			break
 		}
 	}
