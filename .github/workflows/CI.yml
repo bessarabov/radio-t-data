@@ -13,8 +13,6 @@ jobs:
     - uses: actions/checkout@master
 
 
-    - run: git status
-    - run: git remote -v
     - run: git config --global user.email "robot+hal@bessarabov.ru"
     - run: git config --global user.name "HAL 9000"
     - run: git remote rm origin

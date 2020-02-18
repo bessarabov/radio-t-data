@@ -195,8 +195,5 @@ func main() {
 
 	for _, item := range channel.Items {
 		parse_mp3(item.Enclosure.Url)
-
-		// TMP
-		break
 	}
 }
