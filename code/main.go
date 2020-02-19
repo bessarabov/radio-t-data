@@ -174,7 +174,7 @@ func get_sound_length_from_mp3_file(file_name string) int64 {
 
 func main() {
 
-	rss_url := "https://radio-t.com/podcast-archives.rss"
+	rss_url := "https://radio-t.com/podcast.rss"
 
 	resp, err := http.Get(rss_url)
 
@@ -197,17 +197,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	i := 1
-
 	for _, item := range channel.Items {
-		was_parsing := parse_mp3(item.Enclosure.Url)
-
-		if was_parsing {
-			i++
-		}
-
-		if i > 20 {
-			break
-		}
+		parse_mp3(item.Enclosure.Url)
 	}
 }

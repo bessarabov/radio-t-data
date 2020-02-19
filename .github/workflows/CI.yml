@@ -4,7 +4,7 @@ on:
   push:
 
   schedule:
-  - cron: "*/30 * * * *"
+  - cron: "14 * * * 0,1"
 
 jobs:
   build:
@@ -36,5 +36,4 @@ jobs:
 
 
     - run: git add data
-    - run: git commit -m 'Commit'
-    - run: git push origin master
+    - run: git commit -m 'Commit' && git push origin master ; true
