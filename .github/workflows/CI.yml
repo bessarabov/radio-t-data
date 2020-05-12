@@ -36,4 +36,4 @@ jobs:
 
 
     - run: git add data
-    - run: git commit -m 'Commit' && git push origin master ; true
+    - run: git commit --allow-empty-message && git push origin master ; true
